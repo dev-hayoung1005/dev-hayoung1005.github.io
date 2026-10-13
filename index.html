@@ -3,27 +3,85 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>장하영</title>
-<style>
-  body {
-    margin: 0;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: "Malgun Gothic", "맑은 고딕", sans-serif;
-    background: #f7f7f5;
-    color: #222;
-  }
-  main { text-align: center; padding: 24px; }
-  h1 { font-size: 32px; margin: 0 0 12px; }
-  p { font-size: 16px; color: #666; margin: 0; }
-</style>
+<title>장하영 · Cloudflare 적용 미니 프로젝트</title>
+<meta name="description" content="개인 도메인에 Cloudflare를 직접 적용하고, 실제 유입된 공격 시도를 분석한 미니 프로젝트">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main>
+<main>
+
+  <header class="hero">
+    <p class="eyebrow">MINI PROJECT</p>
     <h1>장하영</h1>
-    <p>포트폴리오 페이지를 준비하고 있습니다.</p>
-  </main>
+    <p class="tagline">제품을 먼저 경험하고, 고객의 언어로 전하는 영업</p>
+    <p class="lead">고객에게 설명하기 전에, 고객이 도입할 때와 같은 순서로 Cloudflare를 직접 적용해 보았습니다.
+      이 페이지가 그 결과물입니다.</p>
+  </header>
+
+  <section>
+    <h2>요약</h2>
+    <div class="stats">
+      <div class="stat"><strong>3개</strong><span>직접 설계한 WAF 규칙</span></div>
+      <div class="stat"><strong>1,440건</strong><span>연결 후 하루 동안 유입된 요청</span></div>
+      <div class="stat"><strong>원본 보호</strong><span>차단된 요청은 원본 서버에 도달하지 않음</span></div>
+    </div>
+    <p class="meta">2026.10.12 – 10.13 · AWS Route 53 · GitHub Pages · Cloudflare Free</p>
+  </section>
+
+  <section>
+    <h2>구성</h2>
+    <p>기존 서버는 그대로 두고, 앞에 보안 계층을 한 겹 얹었습니다.</p>
+    <figure>
+      <img src="diagram.png" alt="적용 전: 방문자 → Fastly → GitHub Pages. 적용 후: 방문자 → Cloudflare → Fastly → GitHub Pages" width="1600" height="424">
+      <figcaption>적용 전후 구성도</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>알게 된 것</h2>
+
+    <article class="finding">
+      <h3>1. 위험은 연결되는 순간부터 시작됩니다</h3>
+      <p>주소를 알리지 않은 이 사이트에, 연결 다음 날 새벽 한 해외 IP가 1~2초 사이 서버 비밀번호와 API 키가 담긴
+        설정 파일(<code>.env</code>, <code>.ssh</code>, <code>.terraform</code> 등)을 연달아 찾았습니다.
+        로그를 근거로 숨김 파일 경로를 막는 규칙을 추가하고, 인증서 발급에 쓰이는 <code>/.well-known/</code> 경로는
+        예외로 두어 정상 동작까지 확인했습니다.</p>
+      <figure>
+        <img src="scan-log.png" alt="민감 파일 스캔 요청 로그" width="1600" height="580" loading="lazy">
+        <figcaption>민감 파일 스캔 요청 로그 (IP 일부 가림)</figcaption>
+      </figure>
+    </article>
+
+    <article class="finding">
+      <h3>2. "빨라집니다"는 항상 맞는 말이 아닙니다</h3>
+      <p>적용 전 응답 헤더를 보니, 원래 서버는 이미 다른 CDN(Fastly)을 거쳐 서비스되고 있었습니다.
+        Cloudflare를 연결한 뒤 얻은 것은 속도가 아니라 보안 규칙, 차단 기록, SSL 정책에 대한 통제권이었습니다.
+        이미 CDN을 쓰는 고객이라면, 대체할지 보안 계층으로만 더할지부터 함께 정해야 한다는 것을 배웠습니다.</p>
+    </article>
+  </section>
+
+  <section class="try">
+    <h2>직접 확인해 보세요</h2>
+    <ol>
+      <li>
+        <strong>이 페이지는 Cloudflare를 거쳐 전달되고 있습니다.</strong>
+        <span>개발자 도구(F12) → Network → 새로고침 → 응답 헤더에서 <code>server: cloudflare</code>와
+          <code>cf-ray</code>를 확인할 수 있습니다. <code>style.css</code>를 선택하면 두 번째 새로고침부터
+          <code>cf-cache-status: HIT</code>가 보입니다.</span>
+      </li>
+      <li>
+        <strong>제가 만든 차단 규칙이 동작합니다.</strong>
+        <span><a href="/admin">hayoung.dev/admin</a>에 접속하면 원본 서버에 닿기 전에 Cloudflare가 요청을 차단합니다.
+          차단 화면 아래의 Ray ID로 어떤 규칙에 걸렸는지 추적할 수 있습니다.</span>
+      </li>
+    </ol>
+  </section>
+
+  <footer>
+    <p>장하영 · <a href="mailto:wkdgkdud1005@gmail.com">wkdgkdud1005@gmail.com</a> ·
+      <a href="https://github.com/dev-hayoung1005">GitHub</a></p>
+  </footer>
+
+</main>
 </body>
 </html>
